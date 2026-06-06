@@ -170,7 +170,7 @@ because it needs secrets I don't have.) Actions is already enabled on the repo.
 git tag v11.3.0-unlock && git push origin v11.3.0-unlock
 ```
 
-Then open the finished run → **Artifacts** → download `AltTab-<version>`.
+Then open the finished run → **Artifacts** → download `AltTab-<version>-unlock`.
 
 > The artifact download needs a GitHub login and expires after 90 days. To instead get a permanent,
 > public, no-login download on the **Releases** page, uncomment the "Publish GitHub Release" step at
