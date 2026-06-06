@@ -5,8 +5,8 @@
 #   git push origin pro-unlock         # update the branch
 #   git push origin v11.4.0-unlock     # push JUST this tag -> triggers this workflow
 #
-# Same ad-hoc Release build as build-app.yml; the differences are: it triggers on a tag, and the
-# app version is taken from the tag name. build-app.yml and ci_cd.yml are left untouched.
+# Builds a portable Release app with ad-hoc signing; the app version is taken from the tag name.
+# Upstream's ci_cd.yml is left untouched.
 name: Build AltTab on tag (unsigned)
 
 on:

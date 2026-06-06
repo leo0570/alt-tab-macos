@@ -53,9 +53,10 @@ everywhere with no per-call-site edits:
   lock-search, the App Icons / Titles appearance styles, and Auto window sizing.
   (`ProFeature.attemptUse()` returns early when `isProAvailable`; degradable prefs never get
   downgraded because `isProLocked` is false.)
-- **The trial/nag scheduler goes silent** — `ProTransitionScheduler.computeNextFireDate()` returns
-  `nil` for `.pro`, so none of the Day 1/4/12/15/21/35 popups are ever scheduled. The Day-1 welcome
-  is also suppressed, and the menu bar drops the "Get Pro" item.
+- **The trial/nag popups go silent** — `ProTransitionScheduler.computeNextFireDate()` returns
+  `nil` for `.pro`, so none of the Day 1/12/15/21/35 popups are ever scheduled; the event-triggered
+  Day-4 tour is suppressed by `ProTransitionManager`'s own `.pro` check. The menu bar also drops
+  the "Get Pro" item.
 - **No network calls** — the license server is only contacted when a license key exists in the
   Keychain; a free user has none, so nothing is ever sent.
 
