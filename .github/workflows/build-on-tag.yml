@@ -1,0 +1,77 @@
+# Personal-fork build, TRIGGERED BY A TAG. Use this for versioned builds. Typical flow:
+#   git fetch upstream --tags
+#   git rebase v11.4.0 pro-unlock      # replay the unlock patch onto a new upstream release
+#   git tag v11.4.0-unlock             # name your patched build (NOT the same as upstream's tag)
+#   git push origin pro-unlock         # update the branch
+#   git push origin v11.4.0-unlock     # push JUST this tag -> triggers this workflow
+#
+# Same ad-hoc Release build as build-app.yml; the differences are: it triggers on a tag, and the
+# app version is taken from the tag name. build-app.yml and ci_cd.yml are left untouched.
+name: Build AltTab on tag (unsigned)
+
+on:
+  push:
+    tags: ['*-unlock']     # only tags ending in -unlock (keeps clear of upstream's vX.Y.Z tags)
+  workflow_dispatch: {}    # manual runs still work (version falls back to 11.3.0)
+
+permissions:
+  contents: write          # needed only if you enable the optional Release step at the bottom
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode 26.0.1
+        run: sudo xcode-select -s /Applications/Xcode_26.0.1.app/Contents/Developer
+
+      - name: Derive version from tag
+        id: ver
+        run: |
+          RAW="${GITHUB_REF_NAME}"
+          V="$(printf '%s' "$RAW" | sed -E 's/^v//; s/-unlock$//')"
+          case "$V" in [0-9]*) ;; *) V="11.3.0";; esac   # dispatch on a branch -> fallback
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+          echo "Building version $V from ref $RAW"
+
+      - name: Build Release (ad-hoc signed)
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project alt-tab-macos.xcodeproj \
+            -scheme Release \
+            -configuration Release \
+            -derivedDataPath DerivedData \
+            CURRENT_PROJECT_VERSION=${{ steps.ver.outputs.version }} \
+            CODE_SIGN_IDENTITY=- \
+            CODE_SIGN_STYLE=Manual \
+            DEVELOPMENT_TEAM= \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=YES \
+            ENABLE_HARDENED_RUNTIME=NO \
+            OTHER_CODE_SIGN_FLAGS=--deep \
+            SWIFT_TREAT_WARNINGS_AS_ERRORS=NO
+
+      - name: Package app
+        run: |
+          cd DerivedData/Build/Products/Release
+          ditto -c -k --keepParent AltTab.app AltTab.zip
+
+      - name: Upload artifact (download requires GitHub login)
+        uses: actions/upload-artifact@v4
+        with:
+          name: AltTab-${{ steps.ver.outputs.version }}
+          path: DerivedData/Build/Products/Release/AltTab.zip
+          if-no-files-found: error
+          retention-days: 90
+
+      # ---- OPTIONAL: also publish to the Releases page ----
+      # Uncomment the step below to ALSO create a GitHub Release (with the app attached) on each
+      # tag push. That gives a permanent, public, no-login download link and makes it show up on
+      # the Releases page. NOTE: it makes the patched binary publicly downloadable by anyone.
+      # - name: Publish GitHub Release
+      #   if: startsWith(github.ref, 'refs/tags/')
+      #   uses: softprops/action-gh-release@v2
+      #   with:
+      #     files: DerivedData/Build/Products/Release/AltTab.zip
