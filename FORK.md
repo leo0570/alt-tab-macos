@@ -10,7 +10,19 @@ permitted.
 
 ---
 
-## 1. What was changed
+## 1. Unlock requirements & patch
+
+### Requirements
+
+Any unlock approach (current or redesigned after an upstream rebase) must satisfy:
+
+1. **Keep it as simple as possible** — smallest patch that works; prefer one choke point over scattered edits.
+2. **Do not change current features unless necessary** — no unrelated refactors, UI cleanups, or behavior changes beyond unlocking Pro.
+3. **All Pro features work** — gated shortcuts, switcher search/lock, appearance styles, Auto window sizing, etc.
+
+Cosmetic Pro UI leftovers (badges, "Pro activated" button) are acceptable; stripping them is out of scope unless required.
+
+### Current patch
 
 Everything keys off a single source of truth: `LicenseManager.shared.state` (enum `LicenseState`:
 `.trial` / `.pro` / `.proExpired` / `.trialExpired`). Force it to `.pro` and the whole paywall
@@ -211,6 +223,13 @@ git push origin v11.4.0-unlock       # push JUST this tag → triggers the CI bu
 After downloading the CI artifact, follow the **Updating to a new version** steps in §4 (full
 uninstall, revoke Accessibility/Screen Recording in System Settings, disable auto-update and crash
 reports in the app).
+
+> **Agent note:** `build-on-tag.yml` mirrors upstream's `ci_cd.yml` / `scripts/` build steps inline.
+> If those change on rebase, update the fork workflow too.
+>
+> **Agent note:** The unlock patch may stop working after a rebase (e.g. upstream rewrites the license
+> flow). If it does, revisit the codebase and design a new approach that still meets the **Unlock
+> requirements** in §1.
 
 Keep `master` mirrored too, if desired:
 
