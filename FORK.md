@@ -160,9 +160,10 @@ scripts/run_tests.sh
 ## 4. Building in CI (GitHub Actions) — for use without a local Mac
 
 The fork ships one custom workflow, **`.github/workflows/build-on-tag.yml`**: it builds a portable
-**Release** app with **ad-hoc signing** (no Apple cert / no notarization) and uploads it as an
-artifact. (`ci_cd.yml` is upstream's full release pipeline — left untouched; it won't run here
-because it needs secrets I don't have.) Actions is already enabled on the repo.
+**Release** app with **ad-hoc signing** (no Apple cert / no notarization), publishes it on the
+**Releases** page, and uploads it as an artifact. (`ci_cd.yml` is upstream's full release pipeline —
+left untouched; it won't run here because it needs secrets I don't have.) Actions is already
+enabled on the repo.
 
 **Trigger a build** — push a `*-unlock` tag, or use the **Run workflow** button on `pro-unlock`:
 
@@ -170,11 +171,10 @@ because it needs secrets I don't have.) Actions is already enabled on the repo.
 git tag v11.3.0-unlock && git push origin v11.3.0-unlock
 ```
 
-Then open the finished run → **Artifacts** → download `AltTab-<version>-unlock`.
+**Download the build** (tag pushes only for Releases):
 
-> The artifact download needs a GitHub login and expires after 90 days. To instead get a permanent,
-> public, no-login download on the **Releases** page, uncomment the "Publish GitHub Release" step at
-> the bottom of the workflow (it makes the binary publicly downloadable).
+- **Releases** (permanent, no login): `https://github.com/<owner>/<repo>/releases/tag/v<version>-unlock` → download `AltTab-<version>-unlock.zip`
+- **Artifacts** (login required, 90 days): open the finished workflow run → **Artifacts** → `AltTab-<version>-unlock`
 
 **Install the downloaded build on another Mac:**
 
