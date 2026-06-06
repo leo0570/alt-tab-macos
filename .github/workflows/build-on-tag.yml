@@ -15,7 +15,7 @@ on:
   workflow_dispatch: {}    # manual runs still work (version falls back to 11.3.0)
 
 permissions:
-  contents: write          # needed only if you enable the optional Release step at the bottom
+  contents: write
 
 jobs:
   build:
@@ -66,12 +66,11 @@ jobs:
           if-no-files-found: error
           retention-days: 90
 
-      # ---- OPTIONAL: also publish to the Releases page ----
-      # Uncomment the step below to ALSO create a GitHub Release (with the app attached) on each
-      # tag push. That gives a permanent, public, no-login download link and makes it show up on
-      # the Releases page. NOTE: it makes the patched binary publicly downloadable by anyone.
-      # - name: Publish GitHub Release
-      #   if: startsWith(github.ref, 'refs/tags/')
-      #   uses: softprops/action-gh-release@v2
-      #   with:
-      #     files: DerivedData/Build/Products/Release/AltTab-${{ steps.ver.outputs.version }}-unlock.zip
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v3
+        with:
+          generate_release_notes: false
+          body: |
+            Ad-hoc signed unlock build. See FORK.md for install and update steps.
+          files: DerivedData/Build/Products/Release/AltTab-${{ steps.ver.outputs.version }}-unlock.zip
