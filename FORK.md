@@ -175,6 +175,16 @@ open /Applications/AltTab.app
 Then grant **Accessibility** (required) and **Screen Recording** (only for Thumbnails / window
 previews) in System Settings → Privacy & Security.
 
+**Updating to a new version** — do a clean install; don't just replace the app bundle:
+
+1. **Quit AltTab** and **delete `/Applications/AltTab.app` entirely** (don't overlay the old copy).
+2. **Remove stale permissions** in System Settings → Privacy & Security → **Accessibility** and
+   **Screen Recording** — delete any AltTab entries left from the previous build.
+3. Install the new build as above, then re-grant Accessibility / Screen Recording.
+4. In AltTab → **Settings → General**, set **Don't check for updates periodically** (Sparkle would
+   fetch the official upstream build and undo the unlock) and set **Crash reports policy** to
+   **Never send crash reports**.
+
 Caveats for an ad-hoc-signed build:
 
 - **Permissions reset on each rebuild** (the ad-hoc signature changes with the binary) — re-grant
@@ -197,6 +207,10 @@ git tag v11.4.0-unlock               # name the patched build (distinct from ups
 git push origin pro-unlock           # update the branch
 git push origin v11.4.0-unlock       # push JUST this tag → triggers the CI build
 ```
+
+After downloading the CI artifact, follow the **Updating to a new version** steps in §4 (full
+uninstall, revoke Accessibility/Screen Recording in System Settings, disable auto-update and crash
+reports in the app).
 
 Keep `master` mirrored too, if desired:
 
