@@ -56,13 +56,13 @@ jobs:
       - name: Package app
         run: |
           cd DerivedData/Build/Products/Release
-          ditto -c -k --keepParent AltTab.app AltTab.zip
+          ditto -c -k --keepParent AltTab.app AltTab-${{ steps.ver.outputs.version }}-unlock.zip
 
       - name: Upload artifact (download requires GitHub login)
         uses: actions/upload-artifact@v4
         with:
-          name: AltTab-${{ steps.ver.outputs.version }}
-          path: DerivedData/Build/Products/Release/AltTab.zip
+          name: AltTab-${{ steps.ver.outputs.version }}-unlock
+          path: DerivedData/Build/Products/Release/AltTab-${{ steps.ver.outputs.version }}-unlock.zip
           if-no-files-found: error
           retention-days: 90
 
@@ -74,4 +74,4 @@ jobs:
       #   if: startsWith(github.ref, 'refs/tags/')
       #   uses: softprops/action-gh-release@v2
       #   with:
-      #     files: DerivedData/Build/Products/Release/AltTab.zip
+      #     files: DerivedData/Build/Products/Release/AltTab-${{ steps.ver.outputs.version }}-unlock.zip
