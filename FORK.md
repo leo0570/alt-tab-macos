@@ -160,26 +160,28 @@ scripts/run_tests.sh
 ## 4. Building in CI (GitHub Actions) — for use without a local Mac
 
 The fork ships one custom workflow, **`.github/workflows/build-on-tag.yml`**: it builds a portable
-**Release** app with **ad-hoc signing** (no Apple cert / no notarization), publishes it on the
-**Releases** page, and uploads it as an artifact. (`ci_cd.yml` is upstream's full release pipeline —
-left untouched; it won't run here because it needs secrets I don't have.) Actions is already
-enabled on the repo.
+**Release** app with **ad-hoc signing** (no Apple cert / no notarization) and publishes the zip on
+the **Releases** page when a `*-unlock` tag is pushed. (`ci_cd.yml` is upstream's full release
+pipeline — left untouched; it won't run here because it needs secrets I don't have.) Actions is
+already enabled on the repo.
 
-**Trigger a build** — push a `*-unlock` tag, or use the **Run workflow** button on `pro-unlock`:
+**Trigger a versioned build** — push a `*-unlock` tag:
 
 ```bash
 git tag v11.3.0-unlock && git push origin v11.3.0-unlock
 ```
 
-**Download the build** (tag pushes only for Releases):
+The **Run workflow** button on `pro-unlock` still compiles (version falls back to `11.3.0`) but
+does not publish a download — only tag pushes create a Release.
 
-- **Releases** (permanent, no login): `https://github.com/<owner>/<repo>/releases/tag/v<version>-unlock` → download `AltTab-<version>-unlock.zip`
-- **Artifacts** (login required, 90 days): open the finished workflow run → **Artifacts** → `AltTab-<version>-unlock`
+**Download the build** — open the matching release (permanent, no login):
+`https://github.com/<owner>/<repo>/releases/tag/v<version>-unlock` → download
+`AltTab-<version>-unlock.zip`
 
 **Install the downloaded build on another Mac:**
 
 ```bash
-# unzip the artifact, then:
+# unzip the zip, then:
 mv AltTab.app /Applications/
 xattr -dr com.apple.quarantine /Applications/AltTab.app   # clear the download quarantine
 open /Applications/AltTab.app
@@ -221,7 +223,7 @@ git push origin pro-unlock           # update the branch
 git push origin v11.4.0-unlock       # push JUST this tag → triggers the CI build
 ```
 
-After downloading the CI artifact, follow the **Updating to a new version** steps in §4 (full
+After downloading the release zip, follow the **Updating to a new version** steps in §4 (full
 uninstall, revoke Accessibility/Screen Recording in System Settings, disable auto-update and crash
 reports in the app).
 
