@@ -72,5 +72,16 @@ jobs:
         with:
           generate_release_notes: false
           body: |
-            Ad-hoc signed unlock build. See FORK.md for install and update steps.
+            Ad-hoc signed unlock build (not notarized).
+
+            **Install**
+            1. Unzip and move `AltTab.app` to `/Applications`
+            2. Clear download quarantine:
+               `xattr -dr com.apple.quarantine /Applications/AltTab.app`
+            3. Launch: `open /Applications/AltTab.app`
+               (Or right-click → Open if Gatekeeper still warns.)
+
+            Grant **Accessibility** (required) and **Screen Recording** (for thumbnails) in System Settings.
+
+            Full install/update steps: [FORK.md](https://github.com/leo0570/alt-tab-macos/blob/pro-unlock/FORK.md)
           files: DerivedData/Build/Products/Release/AltTab-${{ steps.ver.outputs.version }}-unlock.zip
