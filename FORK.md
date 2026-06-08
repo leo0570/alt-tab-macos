@@ -182,10 +182,16 @@ scripts/run_tests.sh
 ## 4. Building in CI (GitHub Actions) — for use without a local Mac
 
 The fork ships one custom workflow, **`.github/workflows/build-on-tag.yml`**: it builds a portable
-**Release** app with **ad-hoc signing** (no Apple cert / no notarization) and publishes the zip on
+**Release** app signed with a **stable self-signed certificate** (committed at
+`scripts/codesign/unlock-signing.p12`; no Apple cert / no notarization) and publishes the zip on
 the **Releases** page when a `*-unlock` tag is pushed. (`ci_cd.yml` is upstream's full release
 pipeline — left untouched; it won't run here because it needs secrets I don't have.) Actions is
 already enabled on the repo.
+
+The point of the committed cert is that every build is signed with the **same identity**, so its
+code-signing *designated requirement* never changes. macOS ties Accessibility / Screen Recording
+grants to that requirement, so it keeps your existing grants across updates — you just replace the
+app (see "Updating to a new version" below).
 
 **Trigger a versioned build** — push a `*-unlock` tag:
 
@@ -212,23 +218,36 @@ open /Applications/AltTab.app
 Then grant **Accessibility** (required) and **Screen Recording** (only for Thumbnails / window
 previews) in System Settings → Privacy & Security.
 
-**Updating to a new version** — do a clean install; don't just replace the app bundle:
+**Updating to a new version** — just replace the app bundle; permissions carry over:
 
-1. **Quit AltTab** and **delete `/Applications/AltTab.app` entirely** (don't overlay the old copy).
-2. **Remove stale permissions** in System Settings → Privacy & Security → **Accessibility** and
-   **Screen Recording** — delete any AltTab entries left from the previous build.
-3. Install the new build as above, then re-grant Accessibility / Screen Recording.
-4. In AltTab → **Settings → General**, set **Don't check for updates periodically** and set
-   **Crash reports policy** to **Never send crash reports**. (The update setting is now
-   belt-and-suspenders — unlock builds disable the Sparkle feed in code, see §1 "Keeping the unlock
-   durable" — but it's harmless and reassuring to set anyway.)
+```bash
+# quit AltTab, unzip the new build, then:
+mv -f AltTab.app /Applications/                          # overwrite the old copy in place
+xattr -dr com.apple.quarantine /Applications/AltTab.app  # clear the download quarantine
+open /Applications/AltTab.app
+```
 
-Caveats for an ad-hoc-signed build:
+No deleting the old app, no removing stale permission entries, no re-granting — every build is signed
+with the same committed cert, so macOS recognises the update as the same app and keeps your existing
+Accessibility / Screen Recording grants.
 
-- **Permissions reset on each rebuild** (the ad-hoc signature changes with the binary) — re-grant
-  Accessibility/Screen Recording after updating. Once per version, not daily.
+> **One-time exception:** the **first** self-signed build installed over an older **ad-hoc** build
+> (or after the cert is ever regenerated) changes the signing identity once, so you'll re-grant both
+> permissions that one time — delete the stale AltTab entries in System Settings → Privacy & Security
+> → Accessibility / Screen Recording, then re-grant. Every update after that is seamless.
+
+Optionally, in AltTab → **Settings → General**, set **Don't check for updates periodically** and
+**Crash reports policy** to **Never send crash reports**. (Belt-and-suspenders — unlock builds
+disable the Sparkle feed in code, see §1 "Keeping the unlock durable" — but harmless and reassuring.)
+
+Caveats for a self-signed build:
+
+- **Not notarized**, so Gatekeeper still quarantines the download — clearing it with `xattr` (above)
+  stays necessary on every install/update.
+- **The signing key is public** (the `.p12` is committed to the repo). For a personal-use fork this
+  is an accepted trade for zero-setup builds; don't reuse this cert for anything you care about.
 - **Managed (MDM) Macs.** If IT forces Gatekeeper to "identified developers only" or controls TCC
-  via profiles, an unsigned app may be blocked — policy, not fixable in CI. The only workaround is
+  via profiles, a non-notarized app may be blocked — policy, not fixable in CI. The only workaround is
   signing + notarizing with a personal Apple Developer ID ($99/yr), wired in via repo secrets.
 
 ---

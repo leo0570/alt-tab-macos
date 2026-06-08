@@ -5,9 +5,11 @@
 #   git push origin pro-unlock         # update the branch
 #   git push origin v11.4.0-unlock     # push JUST this tag -> triggers this workflow
 #
-# Builds a portable Release app with ad-hoc signing; the app version is taken from the tag name.
+# Builds a portable Release app signed with a stable self-signed cert; the app version is taken from
+# the tag name. The stable cert keeps the code-signing identity constant across builds, so macOS keeps
+# the granted Accessibility / Screen Recording permissions and updating is just replacing the .app.
 # Upstream's ci_cd.yml is left untouched.
-name: Build AltTab on tag (unsigned)
+name: Build AltTab on tag (self-signed)
 
 on:
   push:
@@ -35,7 +37,12 @@ jobs:
           echo "version=$V" >> "$GITHUB_OUTPUT"
           echo "Building version $V from ref $RAW"
 
-      - name: Build Release (ad-hoc signed)
+      # Import the repo's stable self-signed cert into a fresh CI keychain so every build is signed
+      # with the same identity (constant designated requirement -> macOS keeps TCC permissions).
+      - name: Import stable self-signed certificate
+        run: scripts/codesign/import_certificate_into_new_keychain.sh "scripts/codesign/unlock-signing" ""
+
+      - name: Build Release (self-signed)
         run: |
           set -o pipefail
           xcodebuild \
@@ -44,10 +51,10 @@ jobs:
             -configuration Release \
             -derivedDataPath DerivedData \
             CURRENT_PROJECT_VERSION=${{ steps.ver.outputs.version }} \
-            CODE_SIGN_IDENTITY=- \
+            CODE_SIGN_IDENTITY="Local Self-Signed" \
             CODE_SIGN_STYLE=Manual \
             DEVELOPMENT_TEAM= \
-            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_REQUIRED=YES \
             CODE_SIGNING_ALLOWED=YES \
             ENABLE_HARDENED_RUNTIME=NO \
             OTHER_CODE_SIGN_FLAGS=--deep \
@@ -72,7 +79,7 @@ jobs:
         with:
           generate_release_notes: false
           body: |
-            Ad-hoc signed unlock build (not notarized).
+            Self-signed unlock build (stable cert, not notarized).
 
             **Install**
             1. Unzip and move `AltTab.app` to `/Applications`
@@ -84,6 +91,17 @@ jobs:
                (Or right-click → Open if Gatekeeper still warns.)
 
             Grant **Accessibility** (required) and **Screen Recording** (for thumbnails) in System Settings.
+
+            **Update** — just replace the app, permissions carry over:
+            1. Quit AltTab, unzip, and overwrite `/Applications/AltTab.app` with the new one
+            2. Re-clear quarantine and relaunch:
+               ```bash
+               xattr -dr com.apple.quarantine /Applications/AltTab.app
+               open /Applications/AltTab.app
+               ```
+            No need to delete the app or re-grant permissions — every build is signed with the same
+            stable cert, so macOS keeps your existing grants. (One-time exception: the **first**
+            self-signed build after an older ad-hoc build still needs a fresh grant.)
 
             Full install/update steps: [FORK.md](https://github.com/leo0570/alt-tab-macos/blob/pro-unlock/FORK.md)
           files: DerivedData/Build/Products/Release/AltTab-${{ steps.ver.outputs.version }}-unlock.zip
