@@ -57,8 +57,9 @@ everywhere with no per-call-site edits:
   `nil` for `.pro`, so none of the Day 1/12/15/21/35 popups are ever scheduled; the event-triggered
   Day-4 tour is suppressed by `ProTransitionManager`'s own `.pro` check. The menu bar also drops
   the "Get Pro" item.
-- **No network calls** — the license server is only contacted when a license key exists in the
-  Keychain; a free user has none, so nothing is ever sent.
+- **No network calls** — `scheduleAsyncRevalidationIfNeeded()` and `revalidateWithServer()` return
+  early when `unlockProForFree` is on, so leftover Keychain license entries never trigger a
+  validate call (and cannot flip state back to `.trialExpired`).
 
 ### Why the flag (instead of hard-coding `.pro`)
 

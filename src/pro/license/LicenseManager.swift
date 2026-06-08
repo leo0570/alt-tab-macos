@@ -208,6 +208,7 @@ class LicenseManager {
     }
 
     func scheduleAsyncRevalidationIfNeeded() {
+        guard !unlockProForFree else { return }
         let lastValidation = defaults.double(forKey: "lastValidation")
         let elapsed = clock.now.timeIntervalSince1970 - lastValidation
         guard elapsed >= Self.revalidationInterval else { return }
@@ -215,6 +216,7 @@ class LicenseManager {
     }
 
     func revalidateWithServer() {
+        guard !unlockProForFree else { return }
         guard let licenseKey = keychain.value(account: Self.keychainKeyAccount),
               let instanceId = keychain.value(account: Self.keychainInstanceAccount) else { return }
         api.validate(licenseKey, instanceId: instanceId) { [weak self] result in
