@@ -77,8 +77,10 @@ jobs:
             **Install**
             1. Unzip and move `AltTab.app` to `/Applications`
             2. Clear download quarantine:
-               `xattr -dr com.apple.quarantine /Applications/AltTab.app`
-            3. Launch: `open /Applications/AltTab.app`
+               ```bash
+               xattr -dr com.apple.quarantine /Applications/AltTab.app
+               ```
+            3. Launch: open `AltTab` in `/Applications`, or run `open /Applications/AltTab.app`
                (Or right-click → Open if Gatekeeper still warns.)
 
             Grant **Accessibility** (required) and **Screen Recording** (for thumbnails) in System Settings.
