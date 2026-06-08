@@ -24,6 +24,11 @@ class SparkleDelegate: NSObject, SPUUpdaterDelegate {
     var onNextCheckCompletion: ((UpdateCheckResult) -> Void)?
 
     func feedURLString(for updater: SPUUpdater) -> String? {
+        // Fork modification: unlock builds must never auto-update to the official (locked) upstream
+        // build. There is no SUFeedURL in Info.plist, so returning nil leaves Sparkle with no feed —
+        // scheduled checks and auto-install both become no-ops. Gated on the same flag that drives
+        // the Pro unlock, so the two stay consistent and a vanilla build still updates normally.
+        if LicenseManager.shared.unlockProForFree { return nil }
         return Endpoints.appcastUrl
     }
 
