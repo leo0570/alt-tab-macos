@@ -39,8 +39,10 @@ jobs:
 
       # Import the repo's stable self-signed cert into a fresh CI keychain so every build is signed
       # with the same identity (constant designated requirement -> macOS keeps TCC permissions).
+      # Password is committed on purpose: the cert is a throwaway self-signed key already in the repo
+      # (see FORK.md §4 trade-off). An empty p12 password fails macOS `security import` MAC checks.
       - name: Import stable self-signed certificate
-        run: scripts/codesign/import_certificate_into_new_keychain.sh "scripts/codesign/unlock-signing" ""
+        run: scripts/codesign/import_certificate_into_new_keychain.sh "scripts/codesign/unlock-signing" "alttab-unlock"
 
       - name: Build Release (self-signed)
         run: |
