@@ -26,7 +26,11 @@ Cosmetic Pro UI leftovers (badges, "Pro activated" button) are acceptable; strip
 
 Everything keys off a single source of truth: `LicenseManager.shared.state` (enum `LicenseState`:
 `.trial` / `.pro` / `.proExpired` / `.trialExpired`). Force it to `.pro` and the whole paywall
-falls away at once. The entire patch lives in **`src/pro/license/LicenseManager.swift`**:
+falls away at once. The patch lives in two files, both gated on the same `unlockProForFree` flag:
+**`src/pro/license/LicenseManager.swift`** (the unlock) and **`src/vendors/SparkleDelegate.swift`**
+(auto-update suppression — see "Keeping the unlock durable" below).
+
+In `LicenseManager.swift`:
 
 1. A flag, defaulted off:
    ```swift
@@ -66,6 +70,23 @@ everywhere with no per-call-site edits:
 The flag defaults to `false`, and only `LicenseManager.shared` flips it on. The unit tests in
 `src/pro/license/LicenseManagerTests.swift` build their own `LicenseManager` instances (flag stays
 `false`), so they keep exercising the real trial/expiry logic and stay green.
+
+### Keeping the unlock durable (auto-update)
+
+Forcing `.pro` unlocks the features, but Sparkle would happily replace the whole app: its feed
+points at upstream's official appcast, the default policy auto-checks (and can auto-install), so an
+unlocked build would, within days, "update" itself to the **signed, locked** upstream binary and
+re-lock Pro.
+
+The fix lives in **`src/vendors/SparkleDelegate.swift`**: `feedURLString(for:)` returns `nil` when
+`unlockProForFree` is on. There is **no `SUFeedURL` in `Info.plist`**, so a `nil` feed leaves Sparkle
+with nothing to check — scheduled background checks and auto-install both become silent no-ops, and
+no upstream build can ever be found or downloaded. Gating on the same flag keeps unlock and
+no-auto-update consistent; a vanilla build (flag off) still updates normally.
+
+Minor, accepted side effects in unlock builds: the manual "Check for updates now…" button errors out
+(it would otherwise offer the locked upstream build), and the feedback window's "Report a bug"
+preflight falls through its existing 5-second timeout once per session before showing the form.
 
 ### Known cosmetic leftovers (intentional — minimal scope)
 
@@ -197,9 +218,10 @@ previews) in System Settings → Privacy & Security.
 2. **Remove stale permissions** in System Settings → Privacy & Security → **Accessibility** and
    **Screen Recording** — delete any AltTab entries left from the previous build.
 3. Install the new build as above, then re-grant Accessibility / Screen Recording.
-4. In AltTab → **Settings → General**, set **Don't check for updates periodically** (Sparkle would
-   fetch the official upstream build and undo the unlock) and set **Crash reports policy** to
-   **Never send crash reports**.
+4. In AltTab → **Settings → General**, set **Don't check for updates periodically** and set
+   **Crash reports policy** to **Never send crash reports**. (The update setting is now
+   belt-and-suspenders — unlock builds disable the Sparkle feed in code, see §1 "Keeping the unlock
+   durable" — but it's harmless and reassuring to set anyway.)
 
 Caveats for an ad-hoc-signed build:
 
