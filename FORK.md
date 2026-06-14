@@ -132,6 +132,13 @@ This machine uses **two GitHub accounts**: a global/default one, and `leo0570` s
   user.email = 274127332+leo0570@users.noreply.github.com   # GitHub no-reply → email stays private
   ```
 
+  Set or verify in this repo (no `--global` — other repos keep the default account):
+
+  ```sh
+  git config user.name leo0570
+  git config user.email 274127332+leo0570@users.noreply.github.com
+  ```
+
   The global commit identity (my default account) is unchanged and applies to every other repo.
 
 - **Push auth** is via the **GitHub CLI (`gh`)**, scoped to this repo:
